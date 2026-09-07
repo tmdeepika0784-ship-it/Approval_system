@@ -151,24 +151,30 @@ exports.login = async (req, res, next) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password');
+   const user = await User.findOne({ email }).select('+password');
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
+console.log('LOGIN DEBUG - email:', email);
+console.log('LOGIN DEBUG - user found:', !!user);
 
-    // Check if password matches
-    const isMatch = await user.comparePassword(password);
+if (!user) {
+  console.log('LOGIN DEBUG - USER NOT FOUND');
+  return res.status(401).json({
+    success: false,
+    message: 'Invalid credentials'
+  });
+}
 
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
+const isMatch = await user.comparePassword(password);
+
+console.log('LOGIN DEBUG - password match:', isMatch);
+
+if (!isMatch) {
+  console.log('LOGIN DEBUG - PASSWORD DOES NOT MATCH');
+  return res.status(401).json({
+    success: false,
+    message: 'Invalid credentials'
+  });
+}
 
     // Check if user is active
     if (!user.isActive) {
