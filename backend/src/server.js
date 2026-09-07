@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -6,9 +7,6 @@ const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 const slaService = require('./services/slaService');
 const requestForwardingService = require('./services/requestForwardingService');
-
-// Connect to database
-connectDB();
 
 const app = express();
 
@@ -35,25 +33,46 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handler (must be last)
+// Error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  
-  // Start SLA monitoring service
-  slaService.startSLAMonitoring();
-  
-  // Start request auto-forwarding service
-  requestForwardingService.startForwardingService();
-});
+// Start server after MongoDB connection
+async function startServer() {
+  try {
+    await connectDB();
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error(`Error: ${err.message}`);
-  server.close(() => process.exit(1));
-});
+    const server = app.listen(PORT, function () {
+      console.log(
+        'Server running in ' +
+        process.env.NODE_ENV +
+        ' mode on port ' +
+        PORT
+      );
+
+      // Start SLA monitoring service
+      slaService.startSLAMonitoring();
+
+      // Start request auto-forwarding service
+      requestForwardingService.startForwardingService();
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', function (err) {
+      console.error('Error: ' + err.message);
+
+      server.close(function () {
+        process.exit(1);
+      });
+    });
+
+  } catch (error) {
+    console.error('Failed to start server: ' + error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;
