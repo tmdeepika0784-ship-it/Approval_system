@@ -34,6 +34,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
 app.use('/api/queries', require('./routes/queryRoutes'));
+app.use('/api/cron', require('./routes/cronRoutes'));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
